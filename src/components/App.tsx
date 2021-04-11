@@ -1,0 +1,119 @@
+import clsx from "clsx";
+import { gsap } from "gsap";
+import { includes, random } from "lodash";
+import { FC, useEffect, useRef } from "react";
+import useWebSocket from "react-use-websocket";
+import { parse } from "tekko";
+
+import styles from "./App.module.scss";
+
+const { settings } = window;
+
+const propertyKey = includes(["top", "bottom"], settings.direction) ? "yPercent" : "xPercent";
+const propertyValue = includes(["left", "top"], settings.direction) ? -100 : 100;
+
+const mainTimeline = gsap.timeline();
+
+const App: FC = () => {
+  const pictureRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
+
+  const addImage = async (src: string) => {
+    const contentType = (await fetch(src)).headers.get("content-type") ?? "";
+
+    if (!contentType.startsWith("image/")) {
+      return;
+    }
+
+    const tl = gsap.timeline();
+
+    const startAngle = random(-15, 15);
+    const endAngle = startAngle + random(-15, 15);
+
+    tl.set(imageRef.current, {
+      attr: { src },
+    });
+
+    tl.set(pictureRef.current, {
+      [propertyKey]: propertyValue,
+      rotate: startAngle,
+      opacity: 0,
+    });
+
+    tl.to(pictureRef.current, { [propertyKey]: 0, opacity: 1, rotate: endAngle }, "+=1");
+    tl.to(pictureRef.current, { [propertyKey]: propertyValue, opacity: 0 }, "+=8");
+
+    mainTimeline.add(tl);
+  };
+
+  const { sendMessage } = useWebSocket("wss://irc-ws.chat.twitch.tv", {
+    retryOnError: true,
+    onOpen() {
+      sendMessage("CAP REQ :twitch.tv/tags");
+      sendMessage(`NICK justinfan${8000 + Math.round(Math.random() * 1000)}`);
+      sendMessage(`JOIN #${settings.channel}`);
+    },
+    onMessage(event) {
+      const chunks = event.data.split("\r\n");
+
+      for (const chunk of chunks) {
+        if (chunk.length === 0) {
+          continue;
+        }
+
+        const { command, prefix, tags, trailing } = parse(chunk);
+
+        switch (command) {
+          case "PING": {
+            sendMessage(`PONG :${trailing}`);
+
+            break;
+          }
+
+          case "PRIVMSG": {
+            const badges = String(tags?.badges);
+
+            const isWhitelisted = includes(settings.authorizedUsers, prefix?.name);
+            const isBroadcaster = badges.includes("broadcaster");
+            const isModerator = badges.includes("moderator");
+
+            if (isWhitelisted || isBroadcaster || isModerator) {
+              const matches = trailing.match(/!popim\s+((https?|ftp):\/\/[^\s/$.?#].[^\s]*)/i);
+
+              if (matches) {
+                addImage(matches[1]);
+              }
+            }
+
+            break;
+          }
+        }
+      }
+    },
+  });
+
+  useEffect(() => {
+    gsap.set(pictureRef.current, {
+      [propertyKey]: propertyValue,
+    });
+  }, []);
+
+  return (
+    <div className={clsx(styles.wrapper, styles[settings.direction])}>
+      <div ref={pictureRef} className={styles.picture}>
+        <div className={styles.pictureImage}>
+          <img
+            ref={imageRef}
+            className={styles.image}
+            style={{
+              maxHeight: `${settings.maxSize}px`,
+              maxWidth: `${settings.maxSize}px`,
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default App;

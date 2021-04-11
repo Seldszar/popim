@@ -1,0 +1,48 @@
+.wrapper {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+
+  &.top,
+  &.bottom {
+    justify-content: center;
+  }
+
+  &.left,
+  &.right {
+    align-items: center;
+  }
+
+  &.top {
+    align-items: flex-start;
+  }
+
+  &.right {
+    justify-content: flex-end;
+  }
+
+  &.bottom {
+    align-items: flex-end;
+  }
+
+  &.left {
+    justify-content: flex-start;
+  }
+}
+
+.picture {
+  padding: 40px;
+}
+
+.pictureImage {
+  background: #fff;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.25);
+  padding: 8px;
+}
+
+.image {
+  display: block;
+}
