@@ -1,11 +1,21 @@
 export interface Settings {
   /**
-   * The channel name the chat client will connect.
+   * Channel name the chat client will connect.
    */
   channel: string;
 
   /**
-   * Additional users allowed to use the command.
+   * Command used for triggering the widget.
+   */
+  command: string;
+
+  /**
+   * Badges allowed to use the command.
+   */
+  authorizedBadges: string[];
+
+  /**
+   * Users allowed to use the command.
    */
   authorizedUsers: string[];
 

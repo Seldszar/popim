@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import escapeStringRegexp from "escape-string-regexp";
 import { gsap } from "gsap";
 import { includes, random } from "lodash";
 import { FC, useEffect, useRef } from "react";
@@ -8,6 +9,11 @@ import { parse } from "tekko";
 import styles from "./App.module.scss";
 
 const { settings } = window;
+
+const COMMAND_PATTERN = new RegExp(
+  `${escapeStringRegexp(settings.command)}\\s+((https?|ftp):\\/\\/[^\\s/$.?#].[^\\s]*)`,
+  "i"
+);
 
 const propertyKey = includes(["top", "bottom"], settings.direction) ? "yPercent" : "xPercent";
 const propertyValue = includes(["left", "top"], settings.direction) ? -100 : 100;
@@ -72,13 +78,15 @@ const App: FC = () => {
 
           case "PRIVMSG": {
             const badges = String(tags?.badges);
+            const name = String(prefix?.name);
 
-            const isWhitelisted = includes(settings.authorizedUsers, prefix?.name);
-            const isBroadcaster = badges.includes("broadcaster");
-            const isModerator = badges.includes("moderator");
+            const isAuthorizedUser = settings.authorizedUsers.includes(name);
+            const isAuthorizedBadge = settings.authorizedBadges.some((badge) =>
+              badges.includes(badge)
+            );
 
-            if (isWhitelisted || isBroadcaster || isModerator) {
-              const matches = trailing.match(/!popim\s+((https?|ftp):\/\/[^\s/$.?#].[^\s]*)/i);
+            if (isAuthorizedBadge || isAuthorizedUser) {
+              const matches = trailing.match(COMMAND_PATTERN);
 
               if (matches) {
                 addImage(matches[1]);

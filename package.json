@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "clsx": "^1.1.1",
+    "escape-string-regexp": "^5.0.0",
     "gsap": "^3.6.1",
     "lodash": "^4.17.21",
     "modern-normalize": "^1.0.0",

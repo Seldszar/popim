@@ -1,18 +1,30 @@
 /**
  * Application settings.
  *
- * To use the widget, you have to type `!popim <url>` where the URL returns an image.
- * By default, the broadcaster and moderators are allowed to use the command.
+ * To use the widget, type the command (`!popim <url>` for example) followed by an image URL.
+ * By default, only the broadcaster, moderators and VIPs are allowed to use the command.
  */
 window.settings = {
   /**
-   * The channel name the chat client will connect.
+   * Channel name the chat client will connect.
    * @type {String}
    */
   channel: "0xseldszar",
 
   /**
-   * Additional users allowed to use the command.
+   * Command used for triggering the widget.
+   * @type {String}
+   */
+  command: "!popim",
+
+  /**
+   * Badges allowed to use the command.
+   * @type {String[]}
+   */
+  authorizedBadges: ["broadcaster", "moderator", "vip"],
+
+  /**
+   * Users allowed to use the command.
    * @type {String[]}
    */
   authorizedUsers: [],
