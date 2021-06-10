@@ -1,3 +1,5 @@
+![Preview](preview.gif)
+
 # popim
 
 A visual widget "poping" images through a chat command.
