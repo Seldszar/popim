@@ -25,47 +25,47 @@ const App: FC = () => {
   const imageRef = useRef<HTMLImageElement>(null);
 
   const addImage = async (src: string) => {
-    const contentType = (await fetch(src)).headers.get("content-type") ?? "";
+    const img = new Image();
 
-    if (!contentType.startsWith("image/")) {
-      return;
-    }
+    img.addEventListener("load", () => {
+      const tl = gsap.timeline();
 
-    const tl = gsap.timeline();
+      const startAngle = random(-15, 15);
+      const endAngle = startAngle + random(-15, 15);
 
-    const startAngle = random(-15, 15);
-    const endAngle = startAngle + random(-15, 15);
+      tl.set(imageRef.current, {
+        attr: { src },
+      });
 
-    tl.set(imageRef.current, {
-      attr: { src },
-    });
-
-    tl.set(pictureRef.current, {
-      [propertyKey]: propertyValue,
-      rotate: startAngle,
-      opacity: 0,
-    });
-
-    tl.to(
-      pictureRef.current,
-      {
-        [propertyKey]: 0,
-        rotate: endAngle,
-        opacity: 1,
-      },
-      "+=1"
-    );
-
-    tl.to(
-      pictureRef.current,
-      {
+      tl.set(pictureRef.current, {
         [propertyKey]: propertyValue,
+        rotate: startAngle,
         opacity: 0,
-      },
-      `+=${settings.duration}`
-    );
+      });
 
-    mainTimeline.add(tl);
+      tl.to(
+        pictureRef.current,
+        {
+          [propertyKey]: 0,
+          rotate: endAngle,
+          opacity: 1,
+        },
+        "+=1"
+      );
+
+      tl.to(
+        pictureRef.current,
+        {
+          [propertyKey]: propertyValue,
+          opacity: 0,
+        },
+        `+=${settings.duration}`
+      );
+
+      mainTimeline.add(tl);
+    });
+
+    img.src = src;
   };
 
   const { sendMessage } = useWebSocket("wss://irc-ws.chat.twitch.tv", {
