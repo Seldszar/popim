@@ -46,8 +46,24 @@ const App: FC = () => {
       opacity: 0,
     });
 
-    tl.to(pictureRef.current, { [propertyKey]: 0, opacity: 1, rotate: endAngle }, "+=1");
-    tl.to(pictureRef.current, { [propertyKey]: propertyValue, opacity: 0 }, "+=8");
+    tl.to(
+      pictureRef.current,
+      {
+        [propertyKey]: 0,
+        rotate: endAngle,
+        opacity: 1,
+      },
+      "+=1"
+    );
+
+    tl.to(
+      pictureRef.current,
+      {
+        [propertyKey]: propertyValue,
+        opacity: 0,
+      },
+      `+=${settings.duration}`
+    );
 
     mainTimeline.add(tl);
   };

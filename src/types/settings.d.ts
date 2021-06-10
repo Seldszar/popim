@@ -28,6 +28,11 @@ export interface Settings {
    * Maximum size, in pixels, of the displayed image.
    */
   maxSize: number;
+
+  /**
+   * Duration, in seconds, the image will remain displayed.
+   */
+  duration: number;
 }
 
 declare global {

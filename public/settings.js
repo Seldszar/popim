@@ -40,4 +40,10 @@ window.settings = {
    * @type {Number}
    */
   maxSize: 400,
+
+  /**
+   * Duration, in seconds, the image will remain displayed.
+   * @type {Number}
+   */
+  duration: 8,
 };
