@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import escapeStringRegexp from "escape-string-regexp";
 import { gsap } from "gsap";
-import { includes, random } from "lodash";
+import { includes, lowerCase, random } from "lodash";
 import { FC, useEffect, useRef } from "react";
 import useWebSocket from "react-use-websocket";
 import { parse } from "tekko";
@@ -72,8 +72,8 @@ const App: FC = () => {
     retryOnError: true,
     onOpen() {
       sendMessage("CAP REQ :twitch.tv/tags");
-      sendMessage(`NICK justinfan${8000 + Math.round(Math.random() * 1000)}`);
-      sendMessage(`JOIN #${settings.channel}`);
+      sendMessage(`NICK justinfan${random(8000, 9000)}`);
+      sendMessage(`JOIN #${lowerCase(settings.channel)}`);
     },
     onMessage(event) {
       const chunks = event.data.split("\r\n");
