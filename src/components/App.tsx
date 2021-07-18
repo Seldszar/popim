@@ -25,14 +25,24 @@ const App: FC = () => {
   const imageRef = useRef<HTMLImageElement>(null);
 
   const fetchImage = async (url: string) => {
-    const res = await fetch(`https://cors-anywhere.herokuapp.com/${url}`);
-    const html = await res.text();
+    try {
+      const res = await fetch(`https://cors-anywhere.herokuapp.com/${url}`);
+      const html = await res.text();
 
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, "text/html");
-    const node = doc.head.querySelector("meta[property='og:image']");
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, "text/html");
+      const node = doc.head.querySelector("meta[property='og:image']");
 
-    loadImage(node?.getAttribute("content") ?? url);
+      if (node) {
+        const content = node.getAttribute("content");
+
+        if (content) {
+          url = content;
+        }
+      }
+    } catch {} // eslint-disable-line no-empty
+
+    loadImage(url);
   };
 
   const loadImage = async (src: string) => {
