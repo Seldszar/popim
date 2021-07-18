@@ -24,7 +24,18 @@ const App: FC = () => {
   const pictureRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
 
-  const addImage = async (src: string) => {
+  const fetchImage = async (url: string) => {
+    const res = await fetch(`https://cors-anywhere.herokuapp.com/${url}`);
+    const html = await res.text();
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    const node = doc.head.querySelector("meta[property='og:image']");
+
+    loadImage(node?.getAttribute("content") ?? url);
+  };
+
+  const loadImage = async (src: string) => {
     const img = new Image();
 
     img.addEventListener("load", () => {
@@ -105,7 +116,7 @@ const App: FC = () => {
               const matches = trailing.match(COMMAND_PATTERN);
 
               if (matches) {
-                addImage(matches[1]);
+                fetchImage(matches[1]);
               }
             }
 
