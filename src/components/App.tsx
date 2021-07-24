@@ -151,6 +151,8 @@ const App: FC = () => {
             ref={imageRef}
             className={styles.image}
             style={{
+              minHeight: `${settings.minSize}px`,
+              minWidth: `${settings.minSize}px`,
               maxHeight: `${settings.maxSize}px`,
               maxWidth: `${settings.maxSize}px`,
             }}

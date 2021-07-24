@@ -36,6 +36,12 @@ window.settings = {
   direction: "top",
 
   /**
+   * Minimum size, in pixels, of the displayed image.
+   * @type {Number}
+   */
+  minSize: 200,
+
+  /**
    * Maximum size, in pixels, of the displayed image.
    * @type {Number}
    */

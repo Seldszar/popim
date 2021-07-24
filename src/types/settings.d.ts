@@ -25,6 +25,11 @@ export interface Settings {
   direction: "top" | "right" | "bottom" | "left";
 
   /**
+   * Minimum size, in pixels, of the displayed image.
+   */
+  minSize: number;
+
+  /**
    * Maximum size, in pixels, of the displayed image.
    */
   maxSize: number;
