@@ -64,6 +64,18 @@ async function resolveMedia(url: string, depth = 0): Promise<ResolvedMedia | und
 }
 
 const handler: NextApiHandler = async (request, response) => {
+  response.setHeader("Cache-Control", `s-max-age=86400, stale-while-revalidate`);
+
+  if (request.method === "OPTIONS") {
+    response.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+    response.setHeader("Access-Control-Max-Age", "86400");
+
+    response.status(204);
+    response.end();
+
+    return;
+  }
+
   const media = await resolveMedia(request.query.url as string);
 
   if (media == null) {
