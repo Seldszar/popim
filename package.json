@@ -3,8 +3,8 @@
   "scripts": {
     "build": "next build",
     "develop": "next dev",
-    "lint": "next lint",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "test": "next lint"
   },
   "dependencies": {
     "@emotion/css": "^11.1.3",
