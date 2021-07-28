@@ -12,12 +12,16 @@ export interface Settings {
   /**
    * Badges allowed to use the command.
    */
-  authorizedBadges: string[];
+  authorizedBadges: Array<{
+    name: string;
+  }>;
 
   /**
    * Users allowed to use the command.
    */
-  authorizedUsers: string[];
+  authorizedUsers: Array<{
+    name: string;
+  }>;
 
   /**
    * Direction from where the image will be displayed.
@@ -38,10 +42,4 @@ export interface Settings {
    * Duration, in seconds, the image will remain displayed.
    */
   duration: number;
-}
-
-declare global {
-  interface Window {
-    settings: Settings;
-  }
 }
