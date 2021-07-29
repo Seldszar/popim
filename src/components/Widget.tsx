@@ -63,9 +63,15 @@ const PictureMedia = styled.div<PictureMediaProps>`
   }
 `;
 
-const Curator = styled.div`
-  ${tw`pt-1 text-gray-800 text-right text-xs leading-none uppercase`}
+const Footer = styled.div`
+  ${tw`flex justify-between leading-none pt-1 text-gray-500 text-xs`}
 `;
+
+const ProjectName = styled.div`
+  ${tw`font-bold uppercase`}
+`;
+
+const Curator = styled.div``;
 
 interface WidgetProps {
   settings: Settings;
@@ -210,11 +216,14 @@ const Widget: FC<WidgetProps> = ({ settings }) => {
         {activeMedia && (
           <PictureMedia maxSize={settings.maxSize} minSize={settings.minSize}>
             <Media {...activeMedia.media} />
-            {activeMedia.curator && (
-              <Curator>
-                by <strong>{activeMedia.curator}</strong>
-              </Curator>
-            )}
+            <Footer>
+              <ProjectName>Popim</ProjectName>
+              {activeMedia.curator && (
+                <Curator>
+                  sent by <strong tw="uppercase">{activeMedia.curator}</strong>
+                </Curator>
+              )}
+            </Footer>
           </PictureMedia>
         )}
       </Picture>
