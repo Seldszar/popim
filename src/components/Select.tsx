@@ -1,4 +1,4 @@
-import type { FC } from "react";
+import type { FC, ReactNode } from "react";
 
 import PropTypes from "prop-types";
 import { forwardRef, useEffect, useRef } from "react";
@@ -34,7 +34,7 @@ const InputValue = styled.div`
 `;
 
 const InputArrow = styled.div`
-  ${tw`flex flex-shrink-0 inset-y-0 items-center pointer-events-none ml-4 right-0`}
+  ${tw`flex flex-shrink-0 inset-y-0 items-center pointer-events-none ml-2 right-0`}
 
   svg {
     ${tw`fill-current h-6 w-6`}
@@ -61,57 +61,62 @@ export interface SelectOption<T> {
 }
 
 export interface SelectProps<T> {
+  children?: (option: SelectOption<T>) => ReactNode;
   className?: string;
   onChange?: (value: T) => void;
   options: Array<SelectOption<T>>;
-  value: T;
+  value?: T;
 }
 
-const Select: FC<SelectProps<any>> = forwardRef(({ onChange, options, value, ...rest }, ref) => {
-  const [isOpen, toggleOpen] = useToggle(false);
-  const wrapperRef = useRef<HTMLDivElement>(null);
+const Select: FC<SelectProps<any>> = forwardRef(
+  ({ children, onChange, options, value, ...rest }, ref) => {
+    const [isOpen, toggleOpen] = useToggle(false);
+    const wrapperRef = useRef<HTMLDivElement>(null);
 
-  const selectedOption = options.find((option) => option.value === value);
+    const selectedOption = options.find((option) => option.value === value);
 
-  useEffect(() => {
-    if (isOpen) {
-      return;
-    }
+    useEffect(() => {
+      if (isOpen) {
+        return;
+      }
 
-    wrapperRef.current?.blur();
-  }, [isOpen]);
+      wrapperRef.current?.blur();
+    }, [isOpen]);
 
-  return (
-    <Wrapper
-      {...rest}
-      ref={wrapperRef}
-      tabIndex={-1}
-      onClick={toggleOpen}
-      onBlur={() => toggleOpen(false)}
-      isOpen={isOpen}
-    >
-      <Input>
-        <InputValue>{selectedOption?.label ?? "\u200C"}</InputValue>
-        <InputArrow>
-          <svg viewBox="0 0 24 24">
-            <path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z" />
-          </svg>
-        </InputArrow>
-      </Input>
-      <OptionList>
-        {options.map((option) => (
-          <Option
-            key={option.value}
-            isSelected={option === selectedOption}
-            onClick={() => onChange?.(option.value)}
-          >
-            {option.label}
-          </Option>
-        ))}
-      </OptionList>
-    </Wrapper>
-  );
-});
+    return (
+      <Wrapper
+        {...rest}
+        ref={wrapperRef}
+        tabIndex={-1}
+        onClick={toggleOpen}
+        onBlur={() => toggleOpen(false)}
+        isOpen={isOpen}
+      >
+        <Input>
+          <InputValue>
+            {selectedOption ? children?.(selectedOption) ?? selectedOption?.label : "\u200C"}
+          </InputValue>
+          <InputArrow>
+            <svg viewBox="0 0 24 24">
+              <path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z" />
+            </svg>
+          </InputArrow>
+        </Input>
+        <OptionList>
+          {options.map((option) => (
+            <Option
+              key={option.value}
+              isSelected={option === selectedOption}
+              onClick={() => onChange?.(option.value)}
+            >
+              {children?.(option) ?? option.label}
+            </Option>
+          ))}
+        </OptionList>
+      </Wrapper>
+    );
+  }
+);
 
 Select.displayName = "Select";
 Select.propTypes = {

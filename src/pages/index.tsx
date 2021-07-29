@@ -1,21 +1,24 @@
 import type { NextPage } from "next";
 
 import { vestResolver } from "@hookform/resolvers/vest";
+import { forEach, sortBy } from "lodash";
 import NextHead from "next/head";
 import { useRouter } from "next/router";
 import { Controller, useForm } from "react-hook-form";
+import { useAsync } from "react-use";
 import tw, { styled } from "twin.macro";
 import vest, { enforce, test } from "vest";
 
 import { Settings } from "@/types/settings";
 import { encodeSettings } from "@/settings";
 
+import BadgeSelect from "@/components/BadgeSelect";
 import Button from "@/components/Button";
 import Form from "@/components/Form";
 import FormField from "@/components/FormField";
 import FormFieldArray from "@/components/FormFieldArray";
 import Input from "@/components/Input";
-import Select from "@/components/Select";
+import Select, { SelectOption } from "@/components/Select";
 
 const Wrapper = styled.div`
   ${tw`bg-gray-800 flex items-center justify-center min-h-screen text-white`}
@@ -74,6 +77,24 @@ const validationSuite = vest.create((data: Settings) => {
 const IndexPage: NextPage = () => {
   const router = useRouter();
 
+  const badgeOptions = useAsync(async () => {
+    const response = await fetch("https://badges.twitch.tv/v1/badges/global/display");
+    const data = await response.json();
+
+    const badges = new Array<SelectOption<string>>();
+
+    forEach(data["badge_sets"], ({ versions }, name) => {
+      forEach(versions, ({ title }, version) => {
+        badges.push({
+          value: `${name}/${version}`,
+          label: title,
+        });
+      });
+    });
+
+    return sortBy(badges, "label");
+  }, []);
+
   const {
     control,
     register,
@@ -90,13 +111,13 @@ const IndexPage: NextPage = () => {
       duration: 8,
       authorizedBadges: [
         {
-          name: "broadcaster",
+          name: "broadcaster/1",
         },
         {
-          name: "moderator",
+          name: "moderator/1",
         },
         {
-          name: "vip",
+          name: "vip/1",
         },
       ],
     },
@@ -159,14 +180,7 @@ const IndexPage: NextPage = () => {
                     control={control}
                     name={`authorizedBadges.${index}.name`}
                     render={({ field }) => (
-                      <Select
-                        {...field}
-                        options={[
-                          { label: "Broadcaster", value: "broadcaster" },
-                          { label: "Moderator", value: "moderator" },
-                          { label: "VIP", value: "vip" },
-                        ]}
-                      />
+                      <BadgeSelect {...field} options={badgeOptions.value ?? []} />
                     )}
                   />
                 )}
