@@ -160,13 +160,13 @@ const IndexPage: NextPage = () => {
             )}
           </StyledFormField>
           <StyledFormField title="Minimum Size (in pixels)" error={errors.minSize}>
-            {() => <Input type="number" {...register("minSize")} />}
+            {() => <Input type="number" min={1} {...register("minSize")} />}
           </StyledFormField>
           <StyledFormField title="Maximum Size (in pixels)" error={errors.maxSize}>
-            {() => <Input type="number" {...register("maxSize")} />}
+            {() => <Input type="number" min={1} {...register("maxSize")} />}
           </StyledFormField>
           <StyledFormField title="Duration (in seconds)" error={errors.duration}>
-            {() => <Input type="number" {...register("duration")} />}
+            {() => <Input type="number" min={1} {...register("duration")} />}
           </StyledFormField>
           <StyledFormField title="Authorized Badges">
             {() => (
