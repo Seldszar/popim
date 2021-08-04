@@ -41,11 +41,18 @@ async function resolveMedia(url: string, depth = 0): Promise<ResolvedMedia | und
       }
 
       case "text/html": {
+        const { body } = await got.get(url, {
+          headers: {
+            "Accept-Language": "*",
+            "User-Agent": "Twitterbot",
+          },
+        });
+
         const {
           window: {
             document: { head },
           },
-        } = await JSDOM.fromURL(url);
+        } = new JSDOM(body);
 
         for (const selector of followSelectors) {
           const node = head.querySelector(selector);
@@ -64,7 +71,7 @@ async function resolveMedia(url: string, depth = 0): Promise<ResolvedMedia | und
 }
 
 const handler: NextApiHandler = async (request, response) => {
-  response.setHeader("Cache-Control", `s-max-age=86400, stale-while-revalidate`);
+  response.setHeader("Cache-Control", "public, max-age=86400");
 
   if (request.method === "OPTIONS") {
     response.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
