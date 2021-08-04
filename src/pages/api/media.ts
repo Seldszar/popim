@@ -1,17 +1,17 @@
 import type { NextApiHandler } from "next";
 
 import got from "got";
-import { JSDOM } from "jsdom";
-import { head, split, trim } from "lodash";
+import { Parser } from "htmlparser2";
+import { IncomingHttpHeaders } from "http";
+import { head, inRange, split, trim } from "lodash";
 
 import { ResolvedMedia } from "@/types/media";
 
-const followSelectors = [
-  "meta[property='og:video']",
-  "meta[property='twitter:video']",
-  "meta[property='og:image']",
-  "meta[property='twitter:image']",
-];
+const METADATA_PROPERTIES = ["og:video", "twitter:video", "og:image", "twitter:image"];
+
+function getContentType(headers: IncomingHttpHeaders): string {
+  return trim(head(split(headers["content-type"], ";")));
+}
 
 async function resolveMedia(url: string, depth = 0): Promise<ResolvedMedia | undefined> {
   if (depth > 5) {
@@ -19,11 +19,14 @@ async function resolveMedia(url: string, depth = 0): Promise<ResolvedMedia | und
   }
 
   try {
-    const {
-      headers: { "content-type": contentType },
-    } = await got.head(url);
+    const { body, headers } = await got.get(url, {
+      timeout: 5000,
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+      },
+    });
 
-    switch (trim(head(split(contentType, ";")))) {
+    switch (getContentType(headers)) {
       case "image/apng":
       case "image/avif":
       case "image/gif":
@@ -41,29 +44,27 @@ async function resolveMedia(url: string, depth = 0): Promise<ResolvedMedia | und
       }
 
       case "text/html": {
-        const { body } = await got.get(url, {
-          headers: {
-            "Accept-Language": "*",
-            "User-Agent": "Twitterbot",
+        let matchUrl: string | undefined;
+        let matchIndex = Infinity;
+
+        const parser = new Parser({
+          onopentag(name, attributes) {
+            if (name === "meta") {
+              const index = METADATA_PROPERTIES.indexOf(attributes.property);
+
+              if (inRange(index, matchIndex)) {
+                matchUrl = attributes.content;
+                matchIndex = index;
+              }
+            }
           },
         });
 
-        const {
-          window: {
-            document: { head },
-          },
-        } = new JSDOM(body);
+        parser.write(body);
+        parser.end();
 
-        for (const selector of followSelectors) {
-          const node = head.querySelector(selector);
-
-          if (node) {
-            const url = node.getAttribute("content");
-
-            if (url) {
-              return resolveMedia(url, depth + 1);
-            }
-          }
+        if (matchUrl) {
+          return resolveMedia(matchUrl, depth + 1);
         }
       }
     }
