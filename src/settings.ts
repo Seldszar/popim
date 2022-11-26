@@ -1,7 +1,5 @@
 import type { Settings } from "./types/settings";
 
-import { map } from "lodash";
-
 export function encodeSettings(input: Settings): string {
   return Buffer.from(
     JSON.stringify([
@@ -10,8 +8,8 @@ export function encodeSettings(input: Settings): string {
       input.command,
       input.duration,
       input.direction,
-      map(input.authorizedBadges, "name"),
-      map(input.authorizedUsers, "name"),
+      input.authorizedBadges,
+      input.authorizedUsers,
       input.minSize,
       input.maxSize,
     ])
@@ -26,8 +24,8 @@ export function decodeSettings(input: string): Settings {
     command: data[2],
     duration: data[3],
     direction: data[4],
-    authorizedBadges: map(data[5], (name) => ({ name })),
-    authorizedUsers: map(data[6], (name) => ({ name })),
+    authorizedBadges: data[5],
+    authorizedUsers: data[6],
     minSize: data[7],
     maxSize: data[8],
   };

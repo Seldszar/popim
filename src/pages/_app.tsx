@@ -1,25 +1,13 @@
-/* eslint-disable react/prop-types */
+import "antd/dist/reset.css";
 
-import type { AppProps } from "next/app";
-import type { FC } from "react";
+import { setup } from "goober";
+import { AppProps } from "next/app";
+import { createElement } from "react";
 
-import { Global } from "@emotion/react";
-import tw, { css, GlobalStyles } from "twin.macro";
+setup(createElement);
 
-const App: FC<AppProps> = ({ Component, pageProps }) => (
-  <>
-    <GlobalStyles />
-
-    <Global
-      styles={css`
-        body {
-          ${tw`min-h-screen`}
-        }
-      `}
-    />
-
-    <Component {...pageProps} />
-  </>
-);
+function App({ Component, pageProps }: AppProps) {
+  return <Component {...pageProps} />;
+}
 
 export default App;

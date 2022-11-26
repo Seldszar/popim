@@ -1,45 +1,56 @@
-import type { FC } from "react";
-
-import { css } from "@emotion/react";
+import { styled } from "goober";
 import { gsap } from "gsap";
 import { escapeRegExp, includes, random, some } from "lodash";
-import PropTypes from "prop-types";
-import { useEffect, useMemo, useRef, useState } from "react";
-import useWebSocket from "react-use-websocket";
-import { parse } from "tekko";
-import tw, { styled } from "twin.macro";
+import { forwardRef, useEffect, useMemo, useRef, useState } from "react";
 
-import { ResolvedMedia } from "@/types/media";
-import { Settings } from "@/types/settings";
+import { useChatClient } from "~/hooks/chat";
 
-import Media from "@/components/Media";
+import { ResolvedMedia } from "~/types/media";
+import { Settings } from "~/types/settings";
+
+import Media from "~/components/Media";
 
 interface WrapperProps {
   direction: string;
 }
 
-const Wrapper = styled.div<WrapperProps>`
-  ${tw`flex h-screen overflow-hidden relative`}
+const Wrapper = styled("div")<WrapperProps>`
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
 
   ${(props) => {
     switch (props.direction) {
       case "bottom":
-        return tw`items-end justify-center`;
+        return `
+          align-items: flex-end;
+          justify-content: center;
+        `;
 
       case "left":
-        return tw`items-center justify-start`;
+        return `
+          align-items: center;
+          justify-content: flex-start;
+        `;
 
       case "right":
-        return tw`items-center justify-end`;
+        return `
+          align-items: center;
+          justify-content: flex-end;
+        `;
 
       case "top":
-        return tw`items-start justify-center`;
+        return `
+          align-items: flex-start;
+          justify-content: center;
+        `;
     }
   }}
 `;
 
-const Picture = styled.div`
-  ${tw`p-8`}
+const Picture = styled("div", forwardRef)`
+  padding: 32px;
 `;
 
 interface PictureMediaProps {
@@ -47,31 +58,24 @@ interface PictureMediaProps {
   minSize: number;
 }
 
-const PictureMedia = styled.div<PictureMediaProps>`
-  ${tw`bg-white p-2 rounded shadow-lg`}
+const PictureMedia = styled("div")<PictureMediaProps>`
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  padding: 8px;
 
   img,
   video {
-    ${tw`block`}
+    display: block;
 
-    ${(props) => css`
-      min-height: ${props.minSize}px;
-      min-width: ${props.minSize}px;
+    ${(props) => `
       max-height: ${props.maxSize}px;
       max-width: ${props.maxSize}px;
+      min-height: ${props.minSize}px;
+      min-width: ${props.minSize}px;
     `}
   }
 `;
-
-const Footer = styled.div`
-  ${tw`flex justify-between leading-none pt-1 text-gray-500 text-xs`}
-`;
-
-const ProjectName = styled.div`
-  ${tw`font-bold uppercase`}
-`;
-
-const Curator = styled.div``;
 
 interface WidgetProps {
   settings: Settings;
@@ -84,7 +88,9 @@ interface ActiveMedia {
 
 const mainTimeline = gsap.timeline();
 
-const Widget: FC<WidgetProps> = ({ settings }) => {
+function Widget(props: WidgetProps) {
+  const { settings } = props;
+
   const commandPattern = useMemo(
     () =>
       new RegExp(
@@ -156,52 +162,30 @@ const Widget: FC<WidgetProps> = ({ settings }) => {
     mainTimeline.add(tl);
   };
 
-  const { sendMessage } = useWebSocket("wss://irc-ws.chat.twitch.tv", {
-    retryOnError: true,
-    onOpen() {
-      sendMessage("CAP REQ :twitch.tv/tags");
-      sendMessage(`NICK justinfan${random(8000, 9000)}`);
-      sendMessage(`JOIN #${settings.channel.toLowerCase()}`);
-    },
-    onMessage(event) {
-      const chunks = event.data.split("\r\n");
+  useChatClient(settings.channel, (message) => {
+    const { command, prefix, tags, trailing } = message;
 
-      for (const chunk of chunks) {
-        if (chunk.length === 0) {
-          continue;
-        }
+    switch (command) {
+      case "PRIVMSG": {
+        const badges = String(tags?.badges);
+        const name = String(prefix?.name);
 
-        const { command, prefix, tags, trailing } = parse(chunk);
+        const isAuthorizedUser = some(settings.authorizedUsers, name);
+        const isAuthorizedBadge = some(settings.authorizedBadges, (badge) =>
+          badges.includes(badge)
+        );
 
-        switch (command) {
-          case "PING": {
-            sendMessage(`PONG :${trailing}`);
+        if (isAuthorizedBadge || isAuthorizedUser) {
+          const matches = trailing.match(commandPattern);
 
-            break;
-          }
-
-          case "PRIVMSG": {
-            const badges = String(tags?.badges);
-            const name = String(prefix?.name);
-
-            const isAuthorizedUser = some(settings.authorizedUsers, { name });
-            const isAuthorizedBadge = some(settings.authorizedBadges, (badge) =>
-              badges.includes(badge.name)
-            );
-
-            if (isAuthorizedBadge || isAuthorizedUser) {
-              const matches = trailing.match(commandPattern);
-
-              if (matches) {
-                addMedia(matches[1], name);
-              }
-            }
-
-            break;
+          if (matches) {
+            addMedia(matches[1], name);
           }
         }
+
+        break;
       }
-    },
+    }
   });
 
   useEffect(() => {
@@ -216,23 +200,11 @@ const Widget: FC<WidgetProps> = ({ settings }) => {
         {activeMedia && (
           <PictureMedia maxSize={settings.maxSize} minSize={settings.minSize}>
             <Media {...activeMedia.media} />
-            <Footer>
-              <ProjectName>Popim</ProjectName>
-              {activeMedia.curator && (
-                <Curator>
-                  sent by <strong tw="uppercase">{activeMedia.curator}</strong>
-                </Curator>
-              )}
-            </Footer>
           </PictureMedia>
         )}
       </Picture>
     </Wrapper>
   );
-};
-
-Widget.propTypes = {
-  settings: PropTypes.any,
-};
+}
 
 export default Widget;

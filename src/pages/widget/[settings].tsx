@@ -1,16 +1,11 @@
-import type { NextPage } from "next";
-
 import { useRouter } from "next/router";
 import { useMemo } from "react";
-import { styled } from "twin.macro";
 
-import { decodeSettings } from "@/settings";
+import { decodeSettings } from "~/settings";
 
-import Widget from "@/components/Widget";
+import Widget from "~/components/Widget";
 
-const Wrapper = styled.div``;
-
-const WidgetPage: NextPage = () => {
+function Page() {
   const { query } = useRouter();
 
   const settings = useMemo(
@@ -22,11 +17,7 @@ const WidgetPage: NextPage = () => {
     return null;
   }
 
-  return (
-    <Wrapper>
-      <Widget settings={settings} />
-    </Wrapper>
-  );
-};
+  return <Widget settings={settings} />;
+}
 
-export default WidgetPage;
+export default Page;

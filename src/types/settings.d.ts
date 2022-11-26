@@ -12,16 +12,12 @@ export interface Settings {
   /**
    * Badges allowed to use the command.
    */
-  authorizedBadges: Array<{
-    name: string;
-  }>;
+  authorizedBadges: string[];
 
   /**
    * Users allowed to use the command.
    */
-  authorizedUsers: Array<{
-    name: string;
-  }>;
+  authorizedUsers: string[];
 
   /**
    * Direction from where the image will be displayed.

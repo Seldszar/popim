@@ -1,74 +1,88 @@
-import type { NextApiHandler } from "next";
-
-import got from "got";
 import { Parser } from "htmlparser2";
-import { IncomingHttpHeaders } from "http";
 import { head, inRange, split, trim } from "lodash";
+import { NextApiHandler } from "next";
 
-import { ResolvedMedia } from "@/types/media";
+import { ResolvedMedia } from "~/types/media";
 
-const METADATA_PROPERTIES = ["og:video", "twitter:video", "og:image", "twitter:image"];
+const METADATA_PROPERTIES = [
+  "og:video:secure_url",
+  "og:video:url",
+  "og:video",
 
-function getContentType(headers: IncomingHttpHeaders): string {
-  return trim(head(split(headers["content-type"], ";")));
+  "twitter:video:secure_url",
+  "twitter:video:url",
+  "twitter:video",
+
+  "og:image:secure_url",
+  "og:image:url",
+  "og:image",
+
+  "twitter:image:secure_url",
+  "twitter:image:url",
+  "twitter:image",
+];
+
+function getContentType(headers: Headers): string {
+  return trim(head(split(headers.get("Content-Type"), ";")));
 }
 
-async function resolveMedia(url: string, depth = 0): Promise<ResolvedMedia | undefined> {
-  if (depth > 5) {
-    return;
-  }
-
-  try {
-    const { body, headers } = await got.get(url, {
-      timeout: 5000,
+async function resolveMedia(url: string, depth = 0): Promise<ResolvedMedia> {
+  if (depth < 5) {
+    const response = await fetch(url, {
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
       },
     });
 
-    switch (getContentType(headers)) {
-      case "image/apng":
-      case "image/avif":
-      case "image/gif":
-      case "image/jpeg":
-      case "image/png":
-      case "image/svg+xml":
-      case "image/webp": {
-        return { type: "image", url };
-      }
+    if (response.ok) {
+      switch (getContentType(response.headers)) {
+        case "image/apng":
+        case "image/avif":
+        case "image/gif":
+        case "image/jpeg":
+        case "image/png":
+        case "image/svg+xml":
+        case "image/webp": {
+          return { type: "image", url };
+        }
 
-      case "video/mp4":
-      case "video/ogg":
-      case "video/webm": {
-        return { type: "video", url };
-      }
+        case "video/mp4":
+        case "video/ogg":
+        case "video/webm": {
+          return { type: "video", url };
+        }
 
-      case "text/html": {
-        let matchUrl: string | undefined;
-        let matchIndex = Infinity;
+        case "text/html": {
+          let matchUrl: string | undefined;
+          let matchIndex = Infinity;
 
-        const parser = new Parser({
-          onopentag(name, attributes) {
-            if (name === "meta") {
+          const parser = new Parser({
+            onopentag(name, attributes) {
+              if (name !== "meta") {
+                return;
+              }
+
               const index = METADATA_PROPERTIES.indexOf(attributes.property);
 
               if (inRange(index, matchIndex)) {
                 matchUrl = attributes.content;
                 matchIndex = index;
               }
-            }
-          },
-        });
+            },
+          });
 
-        parser.write(body);
-        parser.end();
+          parser.write(await response.text());
+          parser.end();
 
-        if (matchUrl) {
-          return resolveMedia(matchUrl, depth + 1);
+          if (matchUrl) {
+            return resolveMedia(matchUrl, depth + 1);
+          }
         }
       }
     }
-  } catch {} // eslint-disable-line no-empty
+  }
+
+  throw new Error("Unable to resolve media");
 }
 
 const handler: NextApiHandler = async (request, response) => {
@@ -84,16 +98,12 @@ const handler: NextApiHandler = async (request, response) => {
     return;
   }
 
-  const media = await resolveMedia(request.query.url as string);
+  try {
+    return response.json(await resolveMedia(String(request.query.url)));
+  } catch {} // eslint-disable-line no-empty
 
-  if (media == null) {
-    response.status(404);
-    response.end();
-
-    return;
-  }
-
-  response.json(media);
+  response.status(404);
+  response.end();
 };
 
 export default handler;
