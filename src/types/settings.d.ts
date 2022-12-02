@@ -1,5 +1,10 @@
 export interface Settings {
   /**
+   * Schema version.
+   */
+  version: number;
+
+  /**
    * Channel name the chat client will connect.
    */
   channel: string;

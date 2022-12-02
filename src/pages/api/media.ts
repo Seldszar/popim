@@ -26,56 +26,56 @@ function getContentType(headers: Headers): string {
   return trim(head(split(headers.get("Content-Type"), ";")));
 }
 
-async function resolveMedia(url: string, depth = 0): Promise<ResolvedMedia> {
-  if (depth < 5) {
-    const response = await fetch(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
-      },
-    });
+async function resolveMedia(url: string, shouldFollow = true): Promise<ResolvedMedia> {
+  const response = await fetch(url, {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+    },
+  });
 
-    if (response.ok) {
-      switch (getContentType(response.headers)) {
-        case "image/apng":
-        case "image/avif":
-        case "image/gif":
-        case "image/jpeg":
-        case "image/png":
-        case "image/svg+xml":
-        case "image/webp": {
-          return { type: "image", url };
-        }
+  if (response.ok) {
+    switch (getContentType(response.headers)) {
+      case "image/apng":
+      case "image/avif":
+      case "image/gif":
+      case "image/jpeg":
+      case "image/png":
+      case "image/svg+xml":
+      case "image/webp": {
+        return { type: "image", url };
+      }
 
-        case "video/mp4":
-        case "video/ogg":
-        case "video/webm": {
-          return { type: "video", url };
-        }
+      case "video/mp4":
+      case "video/ogg":
+      case "video/webm": {
+        return { type: "video", url };
+      }
 
-        case "text/html": {
-          let matchUrl: string | undefined;
-          let matchIndex = Infinity;
+      case "text/html": {
+        let matchUrl: string | undefined;
+        let matchIndex = Infinity;
 
-          const parser = new Parser({
-            onopentag(name, attributes) {
-              if (name !== "meta") {
-                return;
-              }
+        const parser = new Parser({
+          onopentag(name, attributes) {
+            if (name !== "meta") {
+              return;
+            }
 
-              const index = METADATA_PROPERTIES.indexOf(attributes.property);
+            const index = METADATA_PROPERTIES.indexOf(attributes.property);
 
-              if (inRange(index, matchIndex)) {
-                matchUrl = attributes.content;
-                matchIndex = index;
-              }
-            },
-          });
+            if (inRange(index, matchIndex)) {
+              matchUrl = attributes.content;
+              matchIndex = index;
+            }
+          },
+        });
 
+        if (shouldFollow) {
           parser.write(await response.text());
           parser.end();
 
           if (matchUrl) {
-            return resolveMedia(matchUrl, depth + 1);
+            return resolveMedia(matchUrl, false);
           }
         }
       }

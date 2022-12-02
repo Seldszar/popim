@@ -1,11 +1,12 @@
 import { Button, ConfigProvider, Form, Input, InputNumber, Layout, Select, Typography } from "antd";
-import { forEach, map, sortBy } from "lodash";
+import { forEach, sortBy } from "lodash";
 import { useRouter } from "next/router";
-import { useAsync } from "react-use";
+import { useAsync, useSearchParam } from "react-use";
 
-import { encodeSettings } from "~/settings";
+import { decodeSettings, encodeSettings } from "~/settings";
 
 function Page() {
+  const settings = useSearchParam("settings");
   const router = useRouter();
 
   const badgeOptions = useAsync(async () => {
@@ -42,40 +43,8 @@ function Page() {
           <Form
             layout="vertical"
             style={{ width: 420 }}
-            initialValues={{
-              channel: "",
-              command: "!popim",
-              direction: "top",
-              minSize: 200,
-              maxSize: 400,
-              duration: 8,
-              authorizedBadges: [
-                {
-                  value: "broadcaster/1",
-                },
-                {
-                  value: "moderator/1",
-                },
-                {
-                  value: "vip/1",
-                },
-              ],
-              authorizedUsers: [],
-            }}
-            onFinish={(values) => {
-              const settings = {
-                channel: values.channel,
-                command: values.command,
-                duration: values.duration,
-                direction: values.direction,
-                minSize: values.minSize,
-                maxSize: values.maxSize,
-                authorizedBadges: map(values.authorizedBadges, "value"),
-                authorizedUsers: map(values.authorizedUsers, "value"),
-              };
-
-              router.push(`/widget/${encodeSettings(settings)}`);
-            }}
+            initialValues={decodeSettings(String(settings))}
+            onFinish={(values) => router.push(`/widget/${encodeSettings(values)}`)}
           >
             <Form.Item
               label="Channel"
