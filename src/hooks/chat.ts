@@ -32,5 +32,5 @@ export function useChatClient(channelName: string, callback: (message: Message) 
     return () => socket.close(1000);
   };
 
-  useEffect(effect, [callback, channelName]);
+  useEffect(effect, [channelName]);
 }
