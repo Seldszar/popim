@@ -98,11 +98,22 @@ const handler: NextApiHandler = async (request, response) => {
     return;
   }
 
-  try {
-    return response.json(await resolveMedia(String(request.query.url)));
-  } catch {} // eslint-disable-line no-empty
+  const {
+    query: { url },
+  } = request;
 
-  response.status(404);
+  if (typeof url === "string") {
+    try {
+      return response.json(await resolveMedia(url));
+    } catch {} // eslint-disable-line no-empty
+
+    response.status(404);
+    response.end();
+
+    return;
+  }
+
+  response.status(400);
   response.end();
 };
 
