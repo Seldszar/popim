@@ -1,14 +1,39 @@
-import { EffectCallback, useEffect } from "react";
+import { useEffect, useRef } from "react";
 import Sockette from "sockette";
 import { Message, parse } from "tekko";
 
-export function useChatClient(channelName: string, callback: (message: Message) => void) {
-  const effect: EffectCallback = () => {
+export type Callback = (message: Message) => void;
+
+export function useChatClient(channelName: string, callback: Callback) {
+  const callbackRef = useRef<Callback>();
+
+  useEffect(() => {
+    callbackRef.current = callback;
+  });
+
+  useEffect(() => {
+    let pingInterval: NodeJS.Timeout | undefined;
+    let pongTimeout: NodeJS.Timeout | undefined;
+
     const socket = new Sockette("wss://irc-ws.chat.twitch.tv", {
       onopen() {
         socket.send("CAP REQ :twitch.tv/tags");
         socket.send(`NICK justinfan${8000 + Math.round(Math.random() * 1000)}`);
         socket.send(`JOIN #${channelName.toLowerCase()}`);
+
+        pingInterval = setInterval(() => {
+          clearTimeout(pongTimeout);
+
+          pongTimeout = setTimeout(() => {
+            socket.reconnect();
+          }, 5000);
+
+          socket.send("PING");
+        }, 60000);
+      },
+      onclose() {
+        clearInterval(pingInterval);
+        clearTimeout(pongTimeout);
       },
       onmessage(event) {
         const chunks = String(event.data).split("\r\n");
@@ -27,6 +52,12 @@ export function useChatClient(channelName: string, callback: (message: Message) 
               break;
             }
 
+            case "PONG": {
+              clearTimeout(pongTimeout);
+
+              break;
+            }
+
             case "RECONNECT": {
               socket.reconnect();
 
@@ -34,13 +65,13 @@ export function useChatClient(channelName: string, callback: (message: Message) 
             }
           }
 
-          callback(message);
+          callbackRef.current?.(message);
         });
       },
     });
 
-    return () => socket.close(1000);
-  };
-
-  useEffect(effect, [channelName]);
+    return () => {
+      socket.close(1000);
+    };
+  }, [channelName]);
 }
