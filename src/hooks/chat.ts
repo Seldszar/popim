@@ -20,8 +20,18 @@ export function useChatClient(channelName: string, callback: (message: Message) 
 
           const message = parse(chunk);
 
-          if (message.command === "PING") {
-            socket.send(`PONG :${message.trailing}`);
+          switch (message.command) {
+            case "PING": {
+              socket.send(`PONG :${message.trailing}`);
+
+              break;
+            }
+
+            case "RECONNECT": {
+              socket.reconnect();
+
+              break;
+            }
           }
 
           callback(message);
