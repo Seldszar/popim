@@ -26,10 +26,10 @@ export function useChatClient(channelName: string, callback: Callback) {
 
           pongTimeout = setTimeout(() => {
             socket.reconnect();
-          }, 5000);
+          }, 30000);
 
           socket.send("PING");
-        }, 60000);
+        }, 240000);
       },
       onclose() {
         clearInterval(pingInterval);
