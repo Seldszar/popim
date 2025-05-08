@@ -2,6 +2,7 @@ import { Parser } from "htmlparser2";
 import { head, inRange, split, trim } from "lodash";
 import { NextApiHandler } from "next";
 
+import { randomUserAgent } from "~/helpers/browser";
 import { ResolvedMedia } from "~/types/media";
 
 const METADATA_PROPERTIES = [
@@ -29,7 +30,7 @@ function getContentType(headers: Headers): string {
 async function resolveMedia(url: string, shouldFollow = true): Promise<ResolvedMedia> {
   const response = await fetch(url, {
     headers: {
-      "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+      "User-Agent": randomUserAgent(),
     },
   });
 
